@@ -85,10 +85,12 @@ class NnInferenceClient(BaseInferenceClient):
                     pred, state = self.model(features, state)
 
                 unique_ids.append(req.unique_id)
-                preds.append(pred.cpu().squeeze(0).numpy().astype(float).tolist())
+                preds.append(pred.to("cpu", non_blocking=True))
 
             self.states[symbol] = state
+        torch.cuda.synchronize()
 
+        preds = [i.squeeze(0).numpy().astype(float).tolist() for i in preds]
         end = time.time()
         elapsed = end - start
 
